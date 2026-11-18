@@ -1,117 +1,61 @@
-# -------------------------------
-# Rule-Based Expert System & Forward Chaining and Backward Chaining
-# -------------------------------
+# Rule Based Expert System
 
-class Rule:
-    def __init__(self, premises, conclusion):
-        self.premises = premises
-        self.conclusion = conclusion
-
-
-# ----------------------------
-# Knowledge Base
-# ----------------------------
-
+# Knowledge Base (Rules)
 rules = [
-    Rule(["Fever", "Cough"], "Flu"),
-    Rule(["Flu", "BodyPain"], "ViralInfection"),
-    Rule(["ViralInfection"], "Medicine"),
-    Rule(["Sneezing"], "Cold"),
-    Rule(["Cold"], "Rest")
+    (["fever", "cough"], "flu"),
+    (["flu"], "take_rest"),
+    (["cold", "sneezing"], "common_cold"),
+    (["common_cold"], "take_medicine")
 ]
 
-
-# ==================================================
-# FORWARD CHAINING
-# ==================================================
-
-def forward_chaining(facts, rules):
-
-    inferred = set(facts)
-
-    print("\nInitial Facts:", inferred)
-
-    changed = True
-
-    while changed:
-
-        changed = False
-
-        for rule in rules:
-
-            if all(p in inferred for p in rule.premises):
-
-                if rule.conclusion not in inferred:
-
-                    inferred.add(rule.conclusion)
-
-                    print("Rule Fired:",rule.premises,"->",rule.conclusion)
-
-                    changed = True
-
-    return inferred
+# Initial facts
+facts = ["fever", "cough", "cold", "sneezing"]
 
 
-# ==================================================
-# BACKWARD CHAINING
-# ==================================================
+# Forward Chaining
+def forward_chaining(facts):
+    print("\n--- Forward Chaining ---")
 
-def backward_chaining(goal, facts, rules, visited=None):
+    while True:
+        new_fact = False
 
-    if visited is None:
-        visited = set()
+        for conditions, result in rules:
+            if all(c in facts for c in conditions):
+                if result not in facts:
+                    facts.append(result)
+                    print("New Fact:", result)
+                    new_fact = True
 
+        if not new_fact:
+            break
+
+    print("Final Facts:", facts)
+
+
+# Backward Chaining
+def backward_chaining(goal, facts):
     if goal in facts:
-        print(goal, "is a known fact.")
         return True
 
-    if goal in visited:
-        return False
-
-    visited.add(goal)
-
-    for rule in rules:
-
-        if rule.conclusion == goal:
-
-            print("\nTrying Rule:",rule.premises,"->",rule.conclusion)
-
-            success = True
-
-            for premise in rule.premises:
-
-                if not backward_chaining(premise,facts,rules,visited):
-                    success = False
-                    break
-            if success:
-                print("Goal", goal, "proved.")
+    for conditions, result in rules:
+        if result == goal:
+            if all(backward_chaining(c, facts)
+                   for c in conditions):
                 return True
 
     return False
 
 
-# ==================================================
 # Main Program
-# ==================================================
+print("Initial Facts:", facts)
 
-facts = {"Fever", "Cough", "BodyPain"}
+forward_chaining(facts)
 
-print("===== FORWARD CHAINING =====")
+print("\n--- Backward Chaining ---")
 
-result = forward_chaining(facts, rules)
+goal = input("Enter goal: ")
 
-print("\nFinal Facts")
-
-for fact in sorted(result):
-    print(fact)
-
-print("\n============================")
-
-goal = "Medicine"
-
-print("\n===== BACKWARD CHAINING =====")
-
-if backward_chaining(goal, facts, rules):
-    print("\nGoal Achieved:", goal)
+if backward_chaining(goal, facts):
+    print("Goal Achieved:", goal)
 else:
-    print("\nGoal Cannot be Proved")
+    print("Goal Not Achieved:", goal)
